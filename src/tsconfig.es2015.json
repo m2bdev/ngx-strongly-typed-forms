@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "module": "es2015",
-    "target": "es5",
+    "module": "es2020",
+    "target": "es2015",
     "baseUrl": ".",
     "stripInternal": true,
     "emitDecoratorMetadata": true,
@@ -11,14 +11,14 @@
     "outDir": "../build",
     "rootDir": ".",
     "lib": [
-      "es2015",
+      "es2018",
       "dom"
     ],
     "skipLibCheck": true,
     "types": []
   },
   "angularCompilerOptions": {
-    "annotateForClosureCompiler": true,
+    "annotateForClosureCompiler": false,
     "strictMetadataEmit": true,
     "skipTemplateCodegen": true,
     "flatModuleOutFile": "ngx-strongly-typed-forms.js",

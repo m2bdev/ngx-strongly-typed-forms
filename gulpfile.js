@@ -1,3 +1,5 @@
+const { doesNotMatch } = require('assert');
+
 /* eslint-disable */
 var gulp = require('gulp'),
   path = require('path'),
@@ -5,8 +7,8 @@ var gulp = require('gulp'),
   rollup = require('gulp-rollup'),
   rename = require('gulp-rename'),
   fs = require('fs-extra'),
-  runSequence = require('run-sequence'),
-  bump = require('gulp-bump');
+  bump = require('gulp-bump'),
+  ngFsUtils = require('@angular/compiler-cli/src/ngtsc/file_system');
 const version = require('./package').version;
 
 const rootFolder = path.join(__dirname);
@@ -18,11 +20,11 @@ const distFolder = path.join(rootFolder, 'dist');
 /**
  * 1. Delete /dist folder
  */
-gulp.task('clean:dist', function () {
-
+gulp.task('clean:dist', function (done) {
   // Delete contents but not dist folder to avoid broken npm links
   // when dist directory is removed while npm link references it.
-  return fs.emptyDirSync(distFolder);
+  fs.emptyDirSync(distFolder);
+  done();
 });
 
 /**
@@ -42,7 +44,8 @@ gulp.task('copy:source', function () {
  *    As of Angular 5, ngc accepts an array and no longer returns a promise.
  */
 gulp.task('ngc', function () {
-  ngc(['--project', `${tmpFolder}/tsconfig.es5.json`]);
+  ngFsUtils.setFileSystem(new ngFsUtils.NodeJSFileSystem());
+  ngc(['--project', `${tmpFolder}/tsconfig.es2015.json`]);
   return Promise.resolve()
 });
 
@@ -182,63 +185,49 @@ gulp.task('copy:license', function () {
 /**
  * 11. Delete /.tmp folder
  */
-gulp.task('clean:tmp', function () {
-  return deleteFolder(tmpFolder);
+gulp.task('clean:tmp', function (done) {
+  deleteFolder(tmpFolder);
+  done();
 });
 
 /**
  * 12. Delete /build folder
  */
-gulp.task('clean:build', function () {
-  return deleteFolder(buildFolder);
+gulp.task('clean:build', function (done) {
+  deleteFolder(buildFolder);
+  done();
 });
 
-gulp.task('compile', function () {
-});
-runSequence(
-  'clean:dist',
-  'copy:source',
-  'ngc',
-  'copy:model',
-  'rollup:fesm',
-  'rollup:umd',
-  'copy:build',
-  'copy:manifest',
-  'copy:license',
-  'copy:readme',
-  'clean:build',
-  'clean:tmp',
-  function (err) {
-    if (err) {
-      console.log('ERROR:', err.message);
-      deleteFolder(distFolder);
-      deleteFolder(tmpFolder);
-      deleteFolder(buildFolder);
-    } else {
-      console.log('Compilation finished succesfully');
-    }
-  });
+gulp.task('compile', 
+  gulp.series(
+    'clean:dist',
+    'copy:source',
+    'ngc',
+    'copy:model',
+    'rollup:fesm',
+    'rollup:umd',
+    'copy:build',
+    'copy:manifest',
+    'copy:license',
+    'copy:readme',
+    'clean:build',
+    'clean:tmp')
+);
 
 /**
  * Watch for any change in the /src folder and compile files
  */
-gulp.task('watch', function () {
+gulp.task('watch', function() {
   gulp.watch(`${srcFolder}/**/*`, ['compile']);
 });
 
-gulp.task('clean', function (callback) {
-  runSequence('clean:dist', 'clean:tmp', 'clean:build', callback);
-});
+gulp.task('clean', gulp.series('clean:dist', 'clean:tmp', 'clean:build'));
 
-gulp.task('build', function (callback) {
-  runSequence('clean', 'compile', callback);
-});
+gulp.task('build', gulp.series('clean', 'compile'));
 
-gulp.task('build:watch', function (callback) {
-  runSequence('build', 'watch', callback);
-});
+gulp.task('build:watch', gulp.series('build', 'watch'));
 
-gulp.task('default', ['build:watch']);
+gulp.task('default', gulp.parallel('build'));
 
 /**
  * Deletes the specified folder
