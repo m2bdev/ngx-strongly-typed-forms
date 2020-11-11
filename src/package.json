@@ -17,8 +17,8 @@
     "type definition"
   ],
   "peerDependencies": {
-    "@angular/forms": "^5.x || ^6.x || ^7.x || ^8.x",
-    "rxjs": "^5.x || ^6.x"
+    "@angular/forms": "^10.x",
+    "rxjs": "^6.x"
   },
   "repository": {
     "type": "git",
